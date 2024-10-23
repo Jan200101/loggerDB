@@ -134,16 +134,14 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     if (!node_path)
         return LOGGERDB_ERROR;
 
-    if (!ldb_path_exists(node_path))
-    {
-        char* p = node_path + strlen(table->path) + 1;
+    char* p = node_path + strlen(table->path);
 
+    if (!ldb_path_is_dir(node_path))
+    {        
         while (*p)
         {
             while (*p != '\0' && *p != '/')
-            {
                 ++p;
-            }
 
             char c = *p;
             *p = '\0';
@@ -160,7 +158,8 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
 
             *p = c;
 
-            ++p;
+            if (c)
+                ++p;
         }
     }
 
@@ -210,6 +209,20 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
     return bytes;
 }
 
+static inline ssize_t _ldb_node_read_file(const char* path, long offset, void* ptr, size_t size)
+{
+    FILE* fd = fopen(path, "rb");
+    if (!fd)
+        return -LOGGERDB_ERROR;
+
+    fseek(fd, offset, SEEK_SET);
+
+    int bytes = fread(ptr, size, 1, fd);
+    fclose(fd);
+
+    return bytes;
+}
+
 ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
     if (!node)
@@ -219,15 +232,25 @@ ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t 
     if (!field_path)
         return -LOGGERDB_ERROR;
 
-    FILE* fd = fopen(field_path, "rb");
+    ssize_t ret = _ldb_node_read_file(field_path, 0, ptr, size);
     free(field_path);
-    if (!fd)
+
+    return ret;
+}
+
+ssize_t ldb_node_read_offset(loggerdb_node* node, const char* field, long offset, void* ptr, size_t size)
+{
+    if (!node)
+        return -LOGGERDB_INVALID;
+
+    char* field_path = ldb_path_join(node->path, field);
+    if (!field_path)
         return -LOGGERDB_ERROR;
 
-    int bytes = fread(ptr, size, 1, fd);
-    fclose(fd);
+    ssize_t ret = _ldb_node_read_file(field_path, offset, ptr, size);
+    free(field_path);
 
-    return bytes;
+    return ret;
 }
 
 ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t size)

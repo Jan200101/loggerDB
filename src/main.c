@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "db.h"
 
@@ -11,6 +12,15 @@ static loggerdb_node* node;
 #define DB_PATH "db_test"
 #define TABLE_NAME "test_table"
 
+struct dataset {
+    time_t time;
+    float values[4];
+};
+
+float rand_float(void)
+{
+    return (float)rand()/(float)(RAND_MAX/100);
+}
 
 int main()
 {
@@ -31,57 +41,46 @@ int main()
         return -1;
     }
 
-    while (true)
+    for (time_t t = 0; t < 60*60*24*31; ++t)
     {
-        res = ldb_node_open(table, time(NULL), &node);
+        res = ldb_node_open(table, t, &node);
         if (res != LOGGERDB_OK)
         {
             printf("Failed to open node (%i)\n", res);
-            return -1;
+            break;
         }
 
-        char bufout[] = "abc";
-        char bufin[] = "efg";
+        struct dataset data = {
+            .time = t,
+            .values = {
+                rand_float(),
+                rand_float(),
+                rand_float(),
+                rand_float()
+            },
+        };
 
-        printf("[*] Appending '%s' to node\n", bufout);
-        s = ldb_node_append(node, "daten", bufout, strlen(bufout));
+        s = ldb_node_append(node, "daten", &data, sizeof(data));
         if (s < 0)
         {
             printf("Failed to write to node (%i)\n", -s);
-            return -1;
-        }
-
-        printf("[*] Reading from node: ");
-        s = ldb_node_read(node, "daten", bufin, strlen(bufout));
-        if (s < 0)
-        {
-            printf("Failed to read from node (%i)\n", -s);
-            return -1;
-        }
-        printf("'%s'\n", bufin);
-
-        printf("[*] node size: %li\n", ldb_node_size(node, "daten"));
-
-        printf("[*] Reading metadata from node\n");
-        s = ldb_node_metadata_read(node, bufin, strlen(bufout));
-        if (s < 0)
-        {
-            printf("[+] Failed to read metadata from node (%i) (expected)\n", -s);
+            ldb_node_close(node);
+            break;
         }
 
         res = ldb_node_close(node);
         if (res != LOGGERDB_OK)
         {
             printf("Failed to close root node (%i)\n", res);
-            return -1;
+            break;
         }
 
-        struct timespec tim;
-        tim.tv_sec  = 0;
-        tim.tv_nsec = 500000000L;
-        nanosleep(&tim, NULL);
-        printf("\n");
+        if (t % (60*60) == 0)
+            fprintf(stderr, "%i\r", (t / (60*60*24)) + 1);
+        if (t % 60 == 0)
+            fprintf(stderr, ".");
     }
+    fprintf(stderr, "\n");
 
     res = ldb_table_close(table);
     if (res != LOGGERDB_OK)
