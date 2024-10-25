@@ -1,0 +1,15 @@
+#ifndef LOGGERDB_STATUS_H
+#define LOGGERDB_STATUS_H
+
+enum littedb_status {
+    LOGGERDB_OK = 0,
+    LOGGERDB_ERROR = 1,
+    LOGGERDB_NOTADB = 2,
+    LOGGERDB_NOTFOUND = 3,
+    LOGGERDB_INVALID = 4,
+    LOGGERDB_IOERROR = 5,
+
+    LOGGERDB_STATUS_END,
+};
+
+#endif

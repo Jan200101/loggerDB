@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "db.h"
+#include "loggerdb.h"
 
 static loggerdb* db;
 static loggerdb_table* table;
@@ -41,7 +41,7 @@ int main()
         return -1;
     }
 
-    for (time_t t = 0; t < 60*60*24*31; ++t)
+    for (time_t t = 0; t < 60*60*24*1; ++t)
     {
         res = ldb_node_open(table, t, &node);
         if (res != LOGGERDB_OK)
