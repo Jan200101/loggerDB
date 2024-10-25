@@ -10,6 +10,9 @@ target_sources(loggerDB INTERFACE
     path.c
     path.h
     status.h
+
+    mutex/mutex.h
+    mutex/null.c
 )
 target_include_directories(loggerDB INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 

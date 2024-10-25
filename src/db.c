@@ -8,6 +8,8 @@
 #include "path.h"
 #include "status.h"
 
+#include "mutex/mutex.h"
+
 int ldb_open(const char* base_path, loggerdb** db)
 {
     if (!base_path)
