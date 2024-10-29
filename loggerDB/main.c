@@ -4,10 +4,10 @@
 #include <stdlib.h>
 
 #include "loggerdb.h"
+#include "util.h"
 
 static loggerdb* db;
 static loggerdb_table* table;
-static loggerdb_node* node;
 
 #define DB_PATH "db_test"
 #define TABLE_NAME "test_table"
@@ -41,15 +41,9 @@ int main()
         return -1;
     }
 
-    for (time_t t = 0; t < 60*60*24*1; ++t)
+    time_t t = 0;
+    for (;t < 60*60*24*31; ++t)
     {
-        res = ldb_node_open(table, t, &node);
-        if (res != LOGGERDB_OK)
-        {
-            printf("Failed to open node (%i)\n", res);
-            break;
-        }
-
         struct dataset data = {
             .time = t,
             .values = {
@@ -60,27 +54,14 @@ int main()
             },
         };
 
-        s = ldb_node_append(node, "daten", &data, sizeof(data));
+        s = ldb_insert_data(table, t, &data, sizeof(data));
         if (s < 0)
         {
             printf("Failed to write to node (%i)\n", -s);
-            ldb_node_close(node);
             break;
         }
-
-        res = ldb_node_close(node);
-        if (res != LOGGERDB_OK)
-        {
-            printf("Failed to close root node (%i)\n", res);
-            break;
-        }
-
-        if (t % (60*60) == 0)
-            fprintf(stderr, "%i\r", (t / (60*60*24)) + 1);
-        if (t % 60 == 0)
-            fprintf(stderr, ".");
     }
-    fprintf(stderr, "\n");
+    fprintf(stderr, "Stored %zu datasets\n", t);
 
     res = ldb_table_close(table);
     if (res != LOGGERDB_OK)

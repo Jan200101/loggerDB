@@ -40,5 +40,3 @@ int ldb_close(loggerdb* db)
 
     return LOGGERDB_OK;
 }
-
-

@@ -9,11 +9,11 @@ void null_mutex_enter(ldb_mutex*) {}
 int null_mutex_try(ldb_mutex*) { return LOGGERDB_OK; }
 void null_mutex_leave(ldb_mutex*) {}
 
-struct ldb_mutex_methods null_mutex = {
-	.alloc = null_mutex_alloc,
-	.free = null_mutex_free,
-	.enter = null_mutex_enter,
-	.try = null_mutex_try,
-	.leave = null_mutex_leave,
+const struct ldb_mutex_methods default_mutex = {
+    .alloc = null_mutex_alloc,
+    .free = null_mutex_free,
+    .enter = null_mutex_enter,
+    .try = null_mutex_try,
+    .leave = null_mutex_leave,
 };
 

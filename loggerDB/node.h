@@ -3,10 +3,13 @@
 
 #include <time.h>
 
+#include "mutex/mutex.h"
+
 typedef struct loggerdb_table loggerdb_table;
 
 typedef struct loggerdb_node {
     time_t time;
+    ldb_mutex* mutex;
     char* path;
 } loggerdb_node;
 

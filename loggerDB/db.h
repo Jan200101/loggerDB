@@ -12,5 +12,6 @@ typedef struct loggerdb {
 
 int ldb_open(const char* base_path, loggerdb** db);
 int ldb_close(loggerdb* db);
+int ldb_delete(loggerdb* db);
 
 #endif

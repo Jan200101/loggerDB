@@ -11,4 +11,7 @@ struct ldb_mutex_methods {
     void (*leave)(ldb_mutex*);
 };
 
+extern const struct ldb_mutex_methods default_mutex;
+extern const struct ldb_mutex_methods* mutex;
+
 #endif
