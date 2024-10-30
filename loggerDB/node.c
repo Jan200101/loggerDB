@@ -10,6 +10,8 @@
 #include "path.h"
 #include "status.h"
 
+#define METADATA_SIZE_LIMIT 255
+
 int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
 {
     if (!table || !node)
@@ -260,12 +262,39 @@ cleanup:
     return bytes;
 }
 
+int ldb_node_exists(loggerdb_node* node, const char* field)
+{
+    assert(node);
+
+    ssize_t ret;
+
+    char* field_path = ldb_path_join(node->path, field);
+    if (!field_path)
+    {
+        return -LOGGERDB_ERROR;
+    }
+
+    if (!ldb_path_exists(field_path))
+    {
+        free(field_path)
+        return LOGGERDB_NOTFOUND;
+    }
+
+    return LOGGERDB_OK;
+}
+
 ssize_t ldb_node_metadata_read(loggerdb_node* node, void* ptr, size_t size)
 {
+    if (size > METADATA_SIZE_LIMIT)
+        return -LOGGERDB_ERROR;
+
     return ldb_node_read(node, "metadata", ptr, size);
 }
 
 ssize_t ldb_node_metadata_write(loggerdb_node* node, void* ptr, size_t size)
 {
+    if (size > METADATA_SIZE_LIMIT)
+        return -LOGGERDB_ERROR;
+
     return ldb_node_write(node, "metadata", ptr, size);
 }

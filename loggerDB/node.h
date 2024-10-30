@@ -20,6 +20,7 @@ ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t 
 ssize_t ldb_node_read_offset(loggerdb_node* node, const char* field, long offset, void* ptr, size_t size);
 ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t size);
 ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_t size);
+int ldb_node_exists(loggerdb_node* node, const char* field);
 ssize_t ldb_node_metadata_read(loggerdb_node* node, void* ptr, size_t size);
 ssize_t ldb_node_metadata_write(loggerdb_node* node, void* ptr, size_t size);
 
