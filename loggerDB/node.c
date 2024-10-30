@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "table.h"
 #include "node.h"
@@ -29,7 +30,18 @@ static const int64_t SECS_IN_DAY = 86400;
 /// Offset to be added to given second values
 static const int64_t SECS_OFFSET = DAY_OFFSET * SECS_IN_DAY;
 
-struct tm* datetime(const time_t* timep, struct tm* result)
+struct dt {
+    int32_t year;
+    uint8_t mon;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t sec;
+};
+
+const char* dd_lut[61] = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"};
+
+struct dt* datetime(const time_t* timep, struct dt* result)
 {
     assert(timep);
     assert(result);
@@ -40,11 +52,11 @@ struct tm* datetime(const time_t* timep, struct tm* result)
 
     const uint64_t prd1 = 71582789 * secs3;
     const uint64_t mins = prd1 >> 32; // secs / 60
-    result->tm_sec = (uint8_t)(((uint32_t)prd1) / 71582789);
+    result->sec = (uint8_t)(((uint32_t)prd1) / 71582789);
 
     const uint64_t prd2 = 71582789 * mins;
-    result->tm_hour = (uint8_t)(prd2 >> 32);
-    result->tm_min = (uint8_t)(((uint32_t)prd2) / 71582789);
+    result->hour = (uint8_t)(prd2 >> 32);
+    result->min = (uint8_t)(((uint32_t)prd2) / 71582789);
 
     //century
     const uint32_t n1 = 4 * days + 3;
@@ -63,9 +75,9 @@ struct tm* datetime(const time_t* timep, struct tm* result)
     const uint32_t m1 = n4 / (1 << 16);
     const uint32_t d1 = n4 % (1 << 16) / 2141;
 
-    result->tm_year = (((int32_t)y1) - YEAR_OFFSET - 1900);
-    result->tm_mon = (uint8_t)((j != 0 ? m1 - 12 : m1) - 1);
-    result->tm_mday = d1 + 1;
+    result->year = (((int32_t)y1) - YEAR_OFFSET);
+    result->mon = (uint8_t)((j != 0 ? m1 - 12 : m1));
+    result->day = d1 + 1;
 
     return result;
 }
@@ -76,13 +88,26 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
         return LOGGERDB_INVALID;
 
     *node = NULL;
-    struct tm newtime;
+    struct dt newtime;
 
     if (!datetime(&time, &newtime))
         return LOGGERDB_ERROR;
 
-    char timebuff[20]; // = "YYYY/MM/DD/HH/MM";
-    strftime(timebuff, 20, "%Y/%m/%d/%H/%M", &newtime);
+    char timebuff[18]; // = "YYYY/MM/DD/HH/MM";
+    for (int i = 4;i;)
+    {
+        timebuff[--i] = '0' + (newtime.year % 10);
+        newtime.year /= 10; 
+    }
+    timebuff[4] = '/';
+    memcpy(timebuff+5, dd_lut[newtime.mon], 2);
+    timebuff[7] = '/';
+    memcpy(timebuff+8, dd_lut[newtime.day], 2);
+    timebuff[10] = '/';
+    memcpy(timebuff+11, dd_lut[newtime.hour], 2);
+    timebuff[13] = '/';
+    memcpy(timebuff+14, dd_lut[newtime.min], 2);
+    timebuff[16] = '\0';
 
     char* node_path = ldb_path_join(table->path, timebuff);
     if (!node_path)
