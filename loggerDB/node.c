@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "table.h"
 #include "node.h"
@@ -11,6 +12,63 @@
 #include "status.h"
 
 #define METADATA_SIZE_LIMIT 255
+
+static const int32_t ERA_OFFSET = 3670;
+/// Every era has 146097 days
+static const int32_t DAYS_IN_ERA = 146097;
+/// Every era has 400 years
+static const int32_t YEARS_IN_ERA = 400;
+/// Number of days from 0000-03-01 to Unix epoch 1970-01-01
+static const int32_t DAYS_TO_UNIX_EPOCH = 719468;
+/// Offset to be added to given day values
+static const int32_t DAY_OFFSET = ERA_OFFSET * DAYS_IN_ERA + DAYS_TO_UNIX_EPOCH;
+/// Offset to be added to given year values
+static const int32_t YEAR_OFFSET = ERA_OFFSET * YEARS_IN_ERA;
+/// Seconds in a single 24 hour calendar day
+static const int64_t SECS_IN_DAY = 86400;
+/// Offset to be added to given second values
+static const int64_t SECS_OFFSET = DAY_OFFSET * SECS_IN_DAY;
+
+struct tm* datetime(const time_t* timep, struct tm* result)
+{
+    assert(timep);
+    assert(result);
+
+    const uint64_t secs2 = (*timep) + SECS_OFFSET;
+    const uint32_t days = secs2 / SECS_IN_DAY;
+    const uint64_t secs3 = secs2 % SECS_IN_DAY;
+
+    const uint64_t prd1 = 71582789 * secs3;
+    const uint64_t mins = prd1 >> 32; // secs / 60
+    result->tm_sec = (uint8_t)(((uint32_t)prd1) / 71582789);
+
+    const uint64_t prd2 = 71582789 * mins;
+    result->tm_hour = (uint8_t)(prd2 >> 32);
+    result->tm_min = (uint8_t)(((uint32_t)prd2) / 71582789);
+
+    //century
+    const uint32_t n1 = 4 * days + 3;
+    const uint32_t c = n1 / 146097;
+    const uint32_t r = n1 % 146097;
+    // year
+    const uint32_t n2 = r | 3;
+    const uint64_t p = 2939745 * ((uint64_t)n2);
+    const uint32_t z = (p / ((uint64_t)1 << 32));
+    const uint32_t n3 = ((p % ((uint64_t)1 << 32)) / 2939745 / 4);
+    const int j = n3 >= 306;
+    const uint32_t y1 = 100 * c + z + j;
+
+    // month and day
+    const uint32_t n4 = 2141 * n3 + 197913;
+    const uint32_t m1 = n4 / (1 << 16);
+    const uint32_t d1 = n4 % (1 << 16) / 2141;
+
+    result->tm_year = (((int32_t)y1) - YEAR_OFFSET - 1900);
+    result->tm_mon = (uint8_t)((j != 0 ? m1 - 12 : m1) - 1);
+    result->tm_mday = d1 + 1;
+
+    return result;
+}
 
 int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
 {
@@ -20,7 +78,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     *node = NULL;
     struct tm newtime;
 
-    if (!localtime_r(&time, &newtime))
+    if (!datetime(&time, &newtime))
         return LOGGERDB_ERROR;
 
     char timebuff[20]; // = "YYYY/MM/DD/HH/MM";
@@ -276,7 +334,7 @@ int ldb_node_exists(loggerdb_node* node, const char* field)
 
     if (!ldb_path_exists(field_path))
     {
-        free(field_path)
+        free(field_path);
         return LOGGERDB_NOTFOUND;
     }
 
