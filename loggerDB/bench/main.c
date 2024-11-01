@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "loggerdb.h"
-#include "util.h"
+#include "loggerDB.h"
+#include "loggerDB/util.h"
 
 static loggerdb* db;
 static loggerdb_table* table;

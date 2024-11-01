@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include "table.h"
-#include "path.h"
-#include "status.h"
-#include "db.h"
+#include "loggerDB/table.h"
+#include "loggerDB/path.h"
+#include "loggerDB/status.h"
+#include "loggerDB/db.h"
 
 int ldb_table_open(loggerdb* db, const char* name, loggerdb_table** table)
 {

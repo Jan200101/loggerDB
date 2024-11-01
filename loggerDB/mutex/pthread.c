@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <pthread.h>
 
-#include "mutex/mutex.h"
-#include "status.h"
+#include "loggerDB/mutex.h"
+#include "loggerDB/status.h"
 
 struct ldb_mutex  {
     pthread_mutex_t mutex;

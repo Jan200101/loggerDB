@@ -2,10 +2,10 @@
 #include <assert.h>
 #include <time.h>
 
-#include "table.h"
-#include "node.h"
-#include "status.h"
-#include "util.h"
+#include "loggerDB/table.h"
+#include "loggerDB/node.h"
+#include "loggerDB/status.h"
+#include "loggerDB/util.h"
 
 #define DATA_FIELD "data"
 

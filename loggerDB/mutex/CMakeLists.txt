@@ -24,6 +24,5 @@ add_library(ldb_mutex INTERFACE)
 target_sources(ldb_mutex INTERFACE
     ${MUTEX_IMPLEMENTATION}
     mutex.c
-    mutex.h
 )
 target_link_libraries(ldb_mutex INTERFACE ${MUTEX_LIBRARY})

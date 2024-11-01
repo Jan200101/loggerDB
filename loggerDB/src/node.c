@@ -7,10 +7,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "table.h"
-#include "node.h"
-#include "path.h"
-#include "status.h"
+#include "loggerDB/table.h"
+#include "loggerDB/node.h"
+#include "loggerDB/path.h"
+#include "loggerDB/status.h"
 
 #define METADATA_SIZE_LIMIT 255
 

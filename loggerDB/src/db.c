@@ -2,13 +2,13 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "db.h"
-#include "table.h"
-#include "node.h"
-#include "path.h"
-#include "status.h"
+#include "loggerDB/db.h"
+#include "loggerDB/table.h"
+#include "loggerDB/node.h"
+#include "loggerDB/path.h"
+#include "loggerDB/status.h"
 
-#include "mutex/mutex.h"
+#include "loggerDB/mutex.h"
 
 int ldb_open(const char* base_path, loggerdb** db)
 {

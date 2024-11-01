@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-#include "mutex/mutex.h"
+#include "loggerDB/utex.h"
 #include "status.h"
 
 ldb_mutex* null_mutex_alloc(void) { return NULL; }
