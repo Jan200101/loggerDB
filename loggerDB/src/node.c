@@ -166,6 +166,20 @@ int ldb_node_close(loggerdb_node* node)
     return LOGGERDB_OK;
 }
 
+int ldb_node_contains(loggerdb_node* node, time_t time)
+{
+    if (!node)
+        return LOGGERDB_INVALID;
+
+    // Round time down to minutes
+    time = (time - time % 60);    
+
+    if (node->time == time)
+        return LOGGERDB_OK;
+
+    return LOGGERDB_ERROR;
+}
+
 ssize_t ldb_node_size(loggerdb_node* node, const char* field)
 {
     if (!node)
