@@ -1,7 +1,7 @@
 #include <stddef.h>
 
-#include "loggerDB/utex.h"
-#include "status.h"
+#include "loggerDB/mutex.h"
+#include "loggerDB/status.h"
 
 ldb_mutex* null_mutex_alloc(void) { return NULL; }
 void null_mutex_free(ldb_mutex*) {}
