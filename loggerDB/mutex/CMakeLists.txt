@@ -13,7 +13,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads)
 
 if (HAVE_FREERTOS)
-    set(MUTEX_IMPLEMENTATION "freertos.c")
+    set(MUTEX_IMPLEMENTATION "null.c")
     set(MUTEX_LIBRARY)
 elseif (CMAKE_USE_PTHREADS_INIT)
     set(MUTEX_IMPLEMENTATION "pthread.c")
