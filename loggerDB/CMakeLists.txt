@@ -11,6 +11,6 @@ target_sources(loggerDB INTERFACE
 target_include_directories(loggerDB INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_link_libraries(loggerDB INTERFACE ldb_mutex)
 
-if (NOT CMAKE_CROSSCOMPILING)
+if (LDB_ENABLE_BENCH)
     add_subdirectory(bench)
 endif()
