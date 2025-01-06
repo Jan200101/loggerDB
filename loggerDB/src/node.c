@@ -109,6 +109,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     memcpy(timebuff+14, dd_lut[newtime.min], 2);
     timebuff[16] = '\0';
 
+    assert(table->path);
     char* node_path = ldb_path_join(table->path, timebuff);
     if (!node_path)
         return LOGGERDB_ERROR;
@@ -310,7 +311,7 @@ ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t
         goto cleanup;
     }
 
-    ssize_t bytes = write(fd, ptr, size);
+    ret = write(fd, ptr, size);
     if (close(fd) < 0)
     {
         ret = -LOGGERDB_ERROR;
@@ -320,7 +321,7 @@ ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t
 cleanup:
     mutex->leave(node->mutex);
 
-    return bytes;
+    return ret;
 }
 
 ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_t size)
@@ -346,7 +347,7 @@ ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_
         goto cleanup;
     }
 
-    ssize_t bytes = write(fd, ptr, size);
+    ret = write(fd, ptr, size);
     if (close(fd) < 0)
     {
         ret = -LOGGERDB_ERROR;
@@ -356,20 +357,16 @@ ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_
 cleanup:
     mutex->leave(node->mutex);
 
-    return bytes;
+    return ret;
 }
 
 int ldb_node_exists(loggerdb_node* node, const char* field)
 {
     assert(node);
 
-    ssize_t ret;
-
     char* field_path = ldb_path_join(node->path, field);
     if (!field_path)
-    {
         return -LOGGERDB_ERROR;
-    }
 
     if (!ldb_path_exists(field_path))
     {
