@@ -10,6 +10,10 @@
 
 #include "loggerDB/mutex.h"
 
+#if (defined(_WIN32) || defined(__WIN32__))
+#define mkdir(A, B) mkdir(A)
+#endif
+
 int ldb_open(const char* base_path, loggerdb** db)
 {
     if (!base_path)

@@ -14,6 +14,10 @@
 
 #define METADATA_SIZE_LIMIT 255
 
+#if (defined(_WIN32) || defined(__WIN32__))
+#define mkdir(A, B) mkdir(A)
+#endif
+
 static const int32_t ERA_OFFSET = 3670;
 /// Every era has 146097 days
 static const int32_t DAYS_IN_ERA = 146097;
