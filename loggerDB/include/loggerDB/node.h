@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "loggerDB/mutex.h"
+#include "loggerDB/compat.h"
 
 typedef struct loggerdb_table loggerdb_table;
 

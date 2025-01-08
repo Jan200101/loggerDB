@@ -2,8 +2,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <errno.h>
+
+#ifdef _MSC_VER
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
 
 #include "loggerDB/db.h"
 
@@ -12,24 +17,45 @@
 // Returns non-zero if path exists
 int ldb_path_exists(const char* path)
 {
+#ifdef _MSC_VER
+    DWORD a = GetFileAttributesA(path);
+    if (a == INVALID_FILE_ATTRIBUTES)
+        return 0;
+    return (a & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_DIRECTORY)) != 0;
+#else
     struct stat sb = {0};
     return stat(path, &sb) == 0;
+#endif
 }
 
 // Returns non-zero if path is a file
 int ldb_path_is_file(const char* path)
 {
+#ifdef _MSC_VER
+    DWORD a = GetFileAttributesA(path);
+    if (a == INVALID_FILE_ATTRIBUTES)
+        return 0;
+    return (a & FILE_ATTRIBUTE_NORMAL) != 0;
+#else
     struct stat sb = {0};
     stat(path, &sb);
     return S_ISREG(sb.st_mode);
+#endif
 }
 
 // Returns non-zero if path is a directory
 int ldb_path_is_dir(const char* path)
 {
+#ifdef _MSC_VER
+    DWORD a = GetFileAttributesA(path);
+    if (a == INVALID_FILE_ATTRIBUTES)
+        return 0;
+    return (a & FILE_ATTRIBUTE_DIRECTORY) != 0;
+#else
     struct stat sb = {0};
     stat(path, &sb);
     return S_ISDIR(sb.st_mode);
+#endif
 }
 
 char* ldb_path_join(const char* s1, const char* s2)

@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
 
 #include "loggerDB/table.h"
 #include "loggerDB/node.h"
