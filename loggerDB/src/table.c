@@ -5,10 +5,7 @@
 #include "loggerDB/path.h"
 #include "loggerDB/status.h"
 #include "loggerDB/db.h"
-
-#if (defined(_WIN32) || defined(__WIN32__))
-#define mkdir(A, B) mkdir(A)
-#endif
+#include "loggerDB/compat.h"
 
 int ldb_table_open(loggerdb* db, const char* name, loggerdb_table** table)
 {

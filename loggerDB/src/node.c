@@ -11,12 +11,9 @@
 #include "loggerDB/node.h"
 #include "loggerDB/path.h"
 #include "loggerDB/status.h"
+#include "loggerDB/compat.h"
 
 #define METADATA_SIZE_LIMIT 255
-
-#if (defined(_WIN32) || defined(__WIN32__))
-#define mkdir(A, B) mkdir(A)
-#endif
 
 #define ERA_OFFSET ((int32_t)3670)
 /// Every era has 146097 days

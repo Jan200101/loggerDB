@@ -2,17 +2,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "loggerDB/compat.h"
 #include "loggerDB/db.h"
 #include "loggerDB/table.h"
 #include "loggerDB/node.h"
 #include "loggerDB/path.h"
 #include "loggerDB/status.h"
-
 #include "loggerDB/mutex.h"
 
-#if (defined(_WIN32) || defined(__WIN32__))
-#define mkdir(A, B) mkdir(A)
-#endif
 
 int ldb_open(const char* base_path, loggerdb** db)
 {
