@@ -18,21 +18,21 @@
 #define mkdir(A, B) mkdir(A)
 #endif
 
-static const int32_t ERA_OFFSET = 3670;
+#define ERA_OFFSET ((int32_t)3670)
 /// Every era has 146097 days
-static const int32_t DAYS_IN_ERA = 146097;
+#define DAYS_IN_ERA ((int32_t)146097)
 /// Every era has 400 years
-static const int32_t YEARS_IN_ERA = 400;
+#define YEARS_IN_ERA ((int32_t)400)
 /// Number of days from 0000-03-01 to Unix epoch 1970-01-01
-static const int32_t DAYS_TO_UNIX_EPOCH = 719468;
+#define DAYS_TO_UNIX_EPOCH ((int32_t)719468)
 /// Offset to be added to given day values
-static const int32_t DAY_OFFSET = ERA_OFFSET * DAYS_IN_ERA + DAYS_TO_UNIX_EPOCH;
+#define DAY_OFFSET (int32_t)(ERA_OFFSET * DAYS_IN_ERA + DAYS_TO_UNIX_EPOCH)
 /// Offset to be added to given year values
-static const int32_t YEAR_OFFSET = ERA_OFFSET * YEARS_IN_ERA;
+#define YEAR_OFFSET (int32_t)(ERA_OFFSET * YEARS_IN_ERA)
 /// Seconds in a single 24 hour calendar day
-static const int64_t SECS_IN_DAY = 86400;
+#define SECS_IN_DAY ((int64_t)86400)
 /// Offset to be added to given second values
-static const int64_t SECS_OFFSET = DAY_OFFSET * SECS_IN_DAY;
+#define SECS_OFFSET (int64_t)(DAY_OFFSET * SECS_IN_DAY)
 
 struct dt {
     int32_t year;
