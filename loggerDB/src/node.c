@@ -86,6 +86,51 @@ struct dt* datetime(const time_t* timep, struct dt* result)
     return result;
 }
 
+static int strtime(struct dt* newtime, char* buff)
+{
+    for (int i = 4;i;)
+    {
+        buff[--i] = '0' + (newtime->year % 10);
+        newtime->year /= 10; 
+    }
+    buff[4] = '/';
+    memcpy(buff+5, dd_lut[newtime->mon], 2);
+    buff[7] = '/';
+    memcpy(buff+8, dd_lut[newtime->day], 2);
+    buff[10] = '/';
+    memcpy(buff+11, dd_lut[newtime->hour], 2);
+    buff[13] = '/';
+    memcpy(buff+14, dd_lut[newtime->min], 2);
+    buff[16] = '\0';
+}
+
+int ldb_node_check(loggerdb_table* table, time_t time)
+{
+    if (!table)
+        return LOGGERDB_INVALID;
+
+    struct dt newtime;
+
+    if (!datetime(&time, &newtime))
+        return LOGGERDB_ERROR;
+
+    char timebuff[18]; // = "YYYY/MM/DD/HH/MM";
+    strtime(&newtime, timebuff);
+
+    assert(table->path);
+    char* node_path = ldb_path_join(table->path, timebuff);
+    if (!node_path)
+        return LOGGERDB_ERROR;
+
+    int ret = LOGGERDB_OK;
+    if (!ldb_path_is_dir(node_path))
+        ret = LOGGERDB_NOTFOUND;
+
+    free(node_path);
+
+    return ret;
+}
+
 int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
 {
     if (!table || !node)
@@ -98,20 +143,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
         return LOGGERDB_ERROR;
 
     char timebuff[18]; // = "YYYY/MM/DD/HH/MM";
-    for (int i = 4;i;)
-    {
-        timebuff[--i] = '0' + (newtime.year % 10);
-        newtime.year /= 10; 
-    }
-    timebuff[4] = '/';
-    memcpy(timebuff+5, dd_lut[newtime.mon], 2);
-    timebuff[7] = '/';
-    memcpy(timebuff+8, dd_lut[newtime.day], 2);
-    timebuff[10] = '/';
-    memcpy(timebuff+11, dd_lut[newtime.hour], 2);
-    timebuff[13] = '/';
-    memcpy(timebuff+14, dd_lut[newtime.min], 2);
-    timebuff[16] = '\0';
+    strtime(&newtime, timebuff);
 
     assert(table->path);
     char* node_path = ldb_path_join(table->path, timebuff);
@@ -148,7 +180,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     }
 
     // Round to minutes
-    time = (time - time % 60);
+    time = (time - time % ldb_node_spacing());
 
     *node = malloc(sizeof(**node));
 
@@ -177,12 +209,17 @@ int ldb_node_contains(loggerdb_node* node, time_t time)
         return LOGGERDB_INVALID;
 
     // Round time down to minutes
-    time = (time - time % 60);    
+    time = (time - time % ldb_node_spacing());    
 
     if (node->time == time)
         return LOGGERDB_OK;
 
     return LOGGERDB_ERROR;
+}
+
+int ldb_node_spacing(void)
+{
+    return 60;
 }
 
 ssize_t ldb_node_size(loggerdb_node* node, const char* field)
@@ -218,7 +255,7 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
         goto cleanup;
     }
 
-    ret = lseek(fd, 0, SEEK_CUR);
+    ret = lseek(fd, 0, SEEK_END);
 
     if (close(fd) < 0)
     {
