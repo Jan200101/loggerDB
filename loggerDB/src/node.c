@@ -86,7 +86,7 @@ struct dt* datetime(const time_t* timep, struct dt* result)
     return result;
 }
 
-static int strtime(struct dt* newtime, char* buff)
+static void strtime(struct dt* newtime, char* buff)
 {
     for (int i = 4;i;)
     {
