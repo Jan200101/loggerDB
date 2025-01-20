@@ -26,12 +26,10 @@ ldb_mutex* pthread_mutex_alloc(void)
 
 void pthread_mutex_free(ldb_mutex* p)
 {
-    if (p)
-    {
-        assert(p->ref == 0);
-        pthread_mutex_destroy(&p->mutex);
-        free(p);
-    }
+    assert(p);
+    assert(p->ref == 0);
+    pthread_mutex_destroy(&p->mutex);
+    free(p);
 }
 
 void pthread_mutex_enter(ldb_mutex* p)
