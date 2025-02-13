@@ -120,7 +120,7 @@ int ldb_node_check(loggerdb_table* table, time_t time)
     assert(table->path);
     char* node_path = ldb_path_join(table->path, timebuff);
     if (!node_path)
-        return LOGGERDB_ERROR;
+        return LOGGERDB_NOMEM;
 
     int ret = LOGGERDB_OK;
     if (!ldb_path_is_dir(node_path))
@@ -148,7 +148,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     assert(table->path);
     char* node_path = ldb_path_join(table->path, timebuff);
     if (!node_path)
-        return LOGGERDB_ERROR;
+        return LOGGERDB_NOMEM;
 
     char* p = node_path + strlen(table->path);
 
@@ -233,7 +233,7 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
     char* field_path = ldb_path_join(node->path, field);
     if (!field_path)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_NOMEM;
         goto cleanup;
     }
 
@@ -251,7 +251,7 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
 
     if (fd < 0)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_FDERR;
         goto cleanup;
     }
 
@@ -259,7 +259,7 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
 
     if (close(fd) < 0)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_FDBAD;
         goto cleanup;
     }
 
@@ -375,7 +375,7 @@ ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_
     char* field_path = ldb_path_join(node->path, field);
     if (!field_path)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_NOMEM;
         goto cleanup;
     }
 
@@ -384,14 +384,14 @@ ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_
 
     if (fd < 0)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_FDERR;
         goto cleanup;
     }
 
     ret = write(fd, ptr, size);
     if (close(fd) < 0)
     {
-        ret = -LOGGERDB_ERROR;
+        ret = -LOGGERDB_FDBAD;
         goto cleanup;
     }
 
@@ -407,7 +407,7 @@ int ldb_node_exists(loggerdb_node* node, const char* field)
 
     char* field_path = ldb_path_join(node->path, field);
     if (!field_path)
-        return -LOGGERDB_ERROR;
+        return -LOGGERDB_NOMEM;
 
     if (!ldb_path_exists(field_path))
     {

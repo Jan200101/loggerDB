@@ -12,6 +12,10 @@ enum littedb_status {
 
     LOGGERDB_BUSY = 6,
 
+    LOGGERDB_NOMEM = 7,
+    LOGGERDB_FDERR = 8,
+    LOGGERDB_FDBAD = 9,
+
     LOGGERDB_STATUS_END,
 };
 
