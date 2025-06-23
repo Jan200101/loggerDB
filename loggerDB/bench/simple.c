@@ -36,7 +36,8 @@ int main()
     assert(res == LOGGERDB_OK);
 
     time_t t = 0;
-    for (;t < 60*60*24*31; ++t)
+    time_t max_t = ((time_t)60*60*24*31);
+    for (;t < max_t; ++t)
     {
         struct dataset data = {
             .time = t,
@@ -58,10 +59,12 @@ int main()
 
             res = ldb_node_open(table, t, &node);
             assert(res == LOGGERDB_OK);
+            assert(node);
         }
 
         s = ldb_node_append(node, "data", &data, sizeof(data));
         assert(s >= 0);
+        fprintf(stderr, ".");
     }
     res = ldb_node_close(node);
     assert(res == LOGGERDB_OK);
