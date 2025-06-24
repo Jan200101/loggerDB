@@ -2,6 +2,7 @@
 #define LOGGERDB_NODE_H
 
 #include <time.h>
+#include <sys/types.h>
 
 #include "loggerDB/mutex.h"
 #include "loggerDB/compat.h"

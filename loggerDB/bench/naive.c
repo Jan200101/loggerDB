@@ -35,7 +35,8 @@ int main()
     assert(res == LOGGERDB_OK);
 
     time_t t = 0;
-    for (;t < 60*60*24*31; ++t)
+    time_t max_t = ((time_t)BENCH_TIME);
+    for (;t < max_t; ++t)
     {
         struct dataset data = {
             .time = t,

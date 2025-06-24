@@ -224,7 +224,7 @@ int ldb_node_spacing(void)
 
 ssize_t ldb_node_size(loggerdb_node* node, const char* field)
 {
-    if (!node)
+    if (!node || !field)
         return -LOGGERDB_INVALID;
 
     ssize_t ret;

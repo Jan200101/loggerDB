@@ -5,6 +5,7 @@ target_sources(loggerDB INTERFACE
     src/db.c
     src/table.c
     src/node.c
+    src/stream.c
     src/path.c
     src/util.c
 )

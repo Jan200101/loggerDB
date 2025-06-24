@@ -5,11 +5,13 @@
 #include <assert.h>
 
 #include "loggerDB.h"
+#include "loggerDB/stream.h"
 #include "loggerDB/util.h"
 
 static loggerdb* db;
 static loggerdb_table* table;
 static loggerdb_node* node;
+static loggerdb_stream* stream;
 
 #define DB_PATH "db_test"
 #define TABLE_NAME "test_table"
@@ -53,6 +55,8 @@ int main()
         {
             if (node)
             {
+                res = ldb_stream_close(stream);
+                assert(res == LOGGERDB_OK);
                 res = ldb_node_close(node);
                 assert(res == LOGGERDB_OK);
             }
@@ -60,12 +64,17 @@ int main()
             res = ldb_node_open(table, t, &node);
             assert(res == LOGGERDB_OK);
             assert(node);
+            res = ldb_stream_open(node, "data", sizeof(data), 0, &stream);
+            assert(res == LOGGERDB_OK);
+            assert(stream);
         }
 
-        s = ldb_node_append(node, "data", &data, sizeof(data));
-        assert(s >= 0);
-        fprintf(stderr, ".");
+        s = ldb_stream_write(stream, &data);
+        assert(s > 0);
+        //fprintf(stderr, ".");
     }
+    res = ldb_stream_close(stream);
+    assert(res == LOGGERDB_OK);
     res = ldb_node_close(node);
     assert(res == LOGGERDB_OK);
 
