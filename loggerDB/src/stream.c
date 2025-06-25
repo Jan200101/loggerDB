@@ -5,7 +5,6 @@
 
 #include "loggerDB/node.h"
 #include "loggerDB/stream.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
 
 int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int flags, loggerdb_stream** stream)
@@ -13,17 +12,9 @@ int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int fl
     if (!node || !field || !stream)
         return LOGGERDB_INVALID;
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-        return LOGGERDB_ERROR;
-
-    int fd = open(field_path, O_RDWR | O_CREAT, 0644);
-    free(field_path);
+    int fd = openat(node->fd, field, O_RDWR | O_CREAT, S_IRWXU);
     if (fd < 0)
-    {
-        printf("\n%s %i\n", field_path, fd);
         return LOGGERDB_FDERR;
-    }
 
     *stream = malloc(sizeof(**stream));
     (*stream)->fd = fd;

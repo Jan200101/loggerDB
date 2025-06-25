@@ -12,7 +12,7 @@ typedef struct loggerdb_table loggerdb_table;
 typedef struct loggerdb_node {
     time_t time;
     ldb_mutex* mutex;
-    char* path;
+    int fd;
 } loggerdb_node;
 
 int ldb_node_check(loggerdb_table* table, time_t time);

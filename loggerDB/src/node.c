@@ -12,7 +12,6 @@
 
 #include "loggerDB/table.h"
 #include "loggerDB/node.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
 #include "loggerDB/compat.h"
 
@@ -117,18 +116,14 @@ int ldb_node_check(loggerdb_table* table, time_t time)
     char timebuff[18]; // = "YYYY/MM/DD/HH/MM";
     strtime(&newtime, timebuff);
 
-    assert(table->path);
-    char* node_path = ldb_path_join(table->path, timebuff);
-    if (!node_path)
-        return LOGGERDB_NOMEM;
+    assert(table->fd >= 0);
+    int node_fd = openat(table->fd, timebuff, O_DIRECTORY | O_RDONLY);
+    if (node_fd < 0)
+        return LOGGERDB_NOTFOUND;
 
-    int ret = LOGGERDB_OK;
-    if (!ldb_path_is_dir(node_path))
-        ret = LOGGERDB_NOTFOUND;
+    close(node_fd);
 
-    free(node_path);
-
-    return ret;
+    return LOGGERDB_OK;
 }
 
 int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
@@ -145,15 +140,11 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     char timebuff[18]; // = "YYYY/MM/DD/HH/MM";
     strtime(&newtime, timebuff);
 
-    assert(table->path);
-    char* node_path = ldb_path_join(table->path, timebuff);
-    if (!node_path)
-        return LOGGERDB_NOMEM;
+    int fd = openat(table->fd, timebuff, O_DIRECTORY | O_RDONLY);
+    if (fd < 0)
+    {
+        char* p = timebuff;
 
-    char* p = node_path + strlen(table->path);
-
-    if (!ldb_path_is_dir(node_path))
-    {        
         while (*p)
         {
             while (*p != '\0' && *p != '/')
@@ -162,21 +153,16 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
             char c = *p;
             *p = '\0';
 
-            if (!ldb_path_exists(node_path))
-            {
-                mkdir(node_path, 0700);
-            }
-            else if (!ldb_path_is_dir(node_path))
-            {
-                free(node_path);
-                return LOGGERDB_ERROR;
-            }
+            mkdirat(table->fd, timebuff, S_IRWXU);
 
             *p = c;
-
             if (c)
                 ++p;
         }
+
+        fd = openat(table->fd, timebuff, O_DIRECTORY | O_RDONLY);
+        if (fd < 0)
+            return LOGGERDB_ERROR;
     }
 
     // Round to minutes
@@ -186,7 +172,7 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
 
     (*node)->time = time;
     (*node)->mutex = mutex->alloc();
-    (*node)->path = node_path;
+    (*node)->fd = fd;
 
     return LOGGERDB_OK;
 }
@@ -196,7 +182,7 @@ int ldb_node_close(loggerdb_node* node)
     if (!node)
         return LOGGERDB_INVALID;
 
-    free(node->path);
+    close(node->fd);
     mutex->free(node->mutex);
     free(node);
 
@@ -230,25 +216,7 @@ ssize_t ldb_node_size(loggerdb_node* node, const char* field)
     ssize_t ret;
     mutex->enter(node->mutex);
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-    {
-        ret = -LOGGERDB_NOMEM;
-        goto cleanup;
-    }
-
-    if (!ldb_path_is_file(field_path))
-    {
-        free(field_path);
-        ret = 0;
-        goto cleanup;
-    }
-
-    // Use append to get the size to prevent double seeking on filesystems
-    // where files are stored as backwards linked-lists
-    int fd = open(field_path, O_RDONLY | O_APPEND);
-    free(field_path);
-
+    int fd = openat(node->fd, field, O_RDONLY | O_APPEND);
     if (fd < 0)
     {
         ret = -LOGGERDB_FDERR;
@@ -269,21 +237,21 @@ cleanup:
     return ret;
 }
 
-static inline ssize_t _ldb_node_read_file(loggerdb_node* node, const char* path, long offset, void* ptr, size_t size)
+ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
-    ssize_t ret;
+    if (!node)
+        return -LOGGERDB_INVALID;
 
+    ssize_t ret;
     mutex->enter(node->mutex);
 
-    int fd = open(path, O_RDONLY);
+    int fd = openat(node->fd, field, O_RDONLY);
+
     if (fd < 0)
     {
         ret = -LOGGERDB_ERROR;
         goto cleanup;
     }
-
-
-    lseek(fd, offset, SEEK_SET);
 
     ret = read(fd, ptr, size);
 
@@ -299,52 +267,15 @@ cleanup:
     return ret;
 }
 
-ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t size)
-{
-    if (!node)
-        return -LOGGERDB_INVALID;
-
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-        return -LOGGERDB_ERROR;
-
-    ssize_t ret = _ldb_node_read_file(node, field_path, 0, ptr, size);
-    free(field_path);
-
-    return ret;
-}
-
 ssize_t ldb_node_read_offset(loggerdb_node* node, const char* field, long offset, void* ptr, size_t size)
 {
     if (!node)
         return -LOGGERDB_INVALID;
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-        return -LOGGERDB_ERROR;
-
-    ssize_t ret = _ldb_node_read_file(node, field_path, offset, ptr, size);
-    free(field_path);
-
-    return ret;
-}
-
-ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t size)
-{
-    assert(node);
-
-    ssize_t ret;
     mutex->enter(node->mutex);
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-    {
-        ret = -LOGGERDB_ERROR;
-        goto cleanup;
-    }
-
-    int fd = open(field_path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    free(field_path);
+    ssize_t ret;
+    int fd = openat(node->fd, field, O_RDONLY);
 
     if (fd < 0)
     {
@@ -352,7 +283,9 @@ ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t
         goto cleanup;
     }
 
-    ret = write(fd, ptr, size);
+    lseek(fd, offset, SEEK_SET);
+    ret = read(fd, ptr, size);
+
     if (close(fd) < 0)
     {
         ret = -LOGGERDB_ERROR;
@@ -365,23 +298,15 @@ cleanup:
     return ret;
 }
 
-ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_t size)
+ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
-    assert(node);
+    if (!node || !field)
+        return -LOGGERDB_INVALID;
 
     ssize_t ret;
     mutex->enter(node->mutex);
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-    {
-        ret = -LOGGERDB_NOMEM;
-        goto cleanup;
-    }
-
-    int fd = open(field_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    free(field_path);
-
+    int fd = openat(node->fd, field, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
     if (fd < 0)
     {
         ret = -LOGGERDB_FDERR;
@@ -389,6 +314,36 @@ ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_
     }
 
     ret = write(fd, ptr, size);
+
+    if (close(fd) < 0)
+    {
+        ret = -LOGGERDB_FDBAD;
+        goto cleanup;
+    }
+
+cleanup:
+    mutex->leave(node->mutex);
+
+    return ret;
+}
+
+ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_t size)
+{
+    if (!node || !field)
+        return -LOGGERDB_INVALID;
+
+    ssize_t ret;
+    mutex->enter(node->mutex);
+
+    int fd = openat(node->fd, field, O_WRONLY | O_CREAT | O_APPEND, S_IRWXU);
+    if (fd < 0)
+    {
+        ret = -LOGGERDB_FDERR;
+        goto cleanup;
+    }
+
+    ret = write(fd, ptr, size);
+
     if (close(fd) < 0)
     {
         ret = -LOGGERDB_FDBAD;
@@ -405,15 +360,11 @@ int ldb_node_exists(loggerdb_node* node, const char* field)
 {
     assert(node);
 
-    char* field_path = ldb_path_join(node->path, field);
-    if (!field_path)
-        return -LOGGERDB_NOMEM;
-
-    if (!ldb_path_exists(field_path))
-    {
-        free(field_path);
+    int fd = openat(node->fd, field, O_RDONLY | O_APPEND);
+    if (fd < 0)
         return LOGGERDB_NOTFOUND;
-    }
+
+    close(fd);
 
     return LOGGERDB_OK;
 }

@@ -4,7 +4,7 @@
 typedef struct loggerdb loggerdb;
 
 typedef struct loggerdb_table {
-    char* path;
+    int fd;
     loggerdb* db;
 } loggerdb_table;
 

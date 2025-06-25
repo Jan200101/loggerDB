@@ -6,7 +6,6 @@ target_sources(loggerDB INTERFACE
     src/table.c
     src/node.c
     src/stream.c
-    src/path.c
     src/util.c
 )
 target_include_directories(loggerDB INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
