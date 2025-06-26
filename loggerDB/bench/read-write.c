@@ -36,6 +36,7 @@ int main()
 
     res = ldb_table_open(&db, TABLE_NAME, &table);
     assert(res == LOGGERDB_OK);
+    assert(ldb_table_valid(&table) == LOGGERDB_OK);
 
     fprintf(stderr, "Storing test data...");
     t = EPOCH_DAYS(3);

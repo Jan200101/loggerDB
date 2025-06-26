@@ -26,6 +26,7 @@ int main()
 
     res = ldb_table_open(&db, TABLE_NAME, &table);
     assert(res == LOGGERDB_OK);
+    assert(ldb_table_valid(&table) == LOGGERDB_OK);
 
     time_t t = 0;
     time_t max_t = ((time_t)BENCH_TIME);

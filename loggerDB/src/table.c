@@ -24,6 +24,7 @@ int ldb_table_open(loggerdb* db, const char* name, loggerdb_table* table)
 
     table->path = table_path;
     table->db = db;
+    table->init = 1;
 
     return LOGGERDB_OK;
 }
@@ -36,7 +37,15 @@ int ldb_table_close(loggerdb_table* table)
     free(table->path);
     table->path = NULL;
     table->db = NULL;
+    table->init = 0;
 
     return LOGGERDB_OK;
 }
 
+int ldb_table_valid(loggerdb_table* table)
+{
+    if (!table || !table->init || !table->path)
+        return LOGGERDB_INVALID;
+
+    return LOGGERDB_OK;
+}
