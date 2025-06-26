@@ -45,7 +45,7 @@ struct dt {
 
 const char* dd_lut[61] = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"};
 
-struct dt* datetime(const time_t* timep, struct dt* result)
+static struct dt* datetime(const time_t* timep, struct dt* result)
 {
     assert(timep);
     assert(result);
@@ -131,12 +131,11 @@ int ldb_node_check(loggerdb_table* table, time_t time)
     return ret;
 }
 
-int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
+int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node* node)
 {
     if (!table || !node)
         return LOGGERDB_INVALID;
 
-    *node = NULL;
     struct dt newtime;
 
     if (!datetime(&time, &newtime))
@@ -182,30 +181,32 @@ int ldb_node_open(loggerdb_table* table, time_t time, loggerdb_node** node)
     // Round to minutes
     time = (time - time % ldb_node_spacing());
 
-    *node = malloc(sizeof(**node));
-
-    (*node)->time = time;
-    (*node)->mutex = mutex->alloc();
-    (*node)->path = node_path;
+    node->time = time;
+    node->mutex = mutex->alloc();
+    node->path = node_path;
+    node->init = 1;
 
     return LOGGERDB_OK;
 }
 
 int ldb_node_close(loggerdb_node* node)
 {
-    if (!node)
+    if (!node || !node->init)
         return LOGGERDB_INVALID;
 
-    free(node->path);
+    node->time = 0;
     mutex->free(node->mutex);
-    free(node);
+    node->mutex = NULL;
+    free(node->path);
+    node->path = NULL;
+    node->init = 0;
 
     return LOGGERDB_OK;
 }
 
 int ldb_node_contains(loggerdb_node* node, time_t time)
 {
-    if (!node)
+    if (!node || !node->init)
         return LOGGERDB_INVALID;
 
     // Round time down to minutes
@@ -217,6 +218,14 @@ int ldb_node_contains(loggerdb_node* node, time_t time)
     return LOGGERDB_ERROR;
 }
 
+int ldb_node_valid(loggerdb_node* node)
+{
+    if (!node || !node->init || !node->path)
+        return LOGGERDB_INVALID;
+
+    return LOGGERDB_OK;
+}
+
 int ldb_node_spacing(void)
 {
     return 60;
@@ -224,7 +233,7 @@ int ldb_node_spacing(void)
 
 ssize_t ldb_node_size(loggerdb_node* node, const char* field)
 {
-    if (!node || !field)
+    if (!node || !node->init || !field)
         return -LOGGERDB_INVALID;
 
     ssize_t ret;
@@ -301,7 +310,7 @@ cleanup:
 
 ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
-    if (!node)
+    if (!node || !node->init)
         return -LOGGERDB_INVALID;
 
     char* field_path = ldb_path_join(node->path, field);
@@ -316,7 +325,7 @@ ssize_t ldb_node_read(loggerdb_node* node, const char* field, void* ptr, size_t 
 
 ssize_t ldb_node_read_offset(loggerdb_node* node, const char* field, long offset, void* ptr, size_t size)
 {
-    if (!node)
+    if (!node || !node->init)
         return -LOGGERDB_INVALID;
 
     char* field_path = ldb_path_join(node->path, field);
@@ -331,7 +340,8 @@ ssize_t ldb_node_read_offset(loggerdb_node* node, const char* field, long offset
 
 ssize_t ldb_node_write(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
-    assert(node);
+    if (!node || !node->init)
+        return -LOGGERDB_INVALID;
 
     ssize_t ret;
     mutex->enter(node->mutex);
@@ -367,7 +377,8 @@ cleanup:
 
 ssize_t ldb_node_append(loggerdb_node* node, const char* field, void* ptr, size_t size)
 {
-    assert(node);
+    if (!node || !node->init)
+        return -LOGGERDB_INVALID;
 
     ssize_t ret;
     mutex->enter(node->mutex);
@@ -403,7 +414,8 @@ cleanup:
 
 int ldb_node_exists(loggerdb_node* node, const char* field)
 {
-    assert(node);
+    if (!node || !node->init)
+        return -LOGGERDB_INVALID;
 
     char* field_path = ldb_path_join(node->path, field);
     if (!field_path)

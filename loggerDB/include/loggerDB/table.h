@@ -8,7 +8,7 @@ typedef struct loggerdb_table {
     loggerdb* db;
 } loggerdb_table;
 
-int ldb_table_open(loggerdb* db, const char* name, loggerdb_table** table);
+int ldb_table_open(loggerdb* db, const char* name, loggerdb_table* table);
 int ldb_table_close(loggerdb_table* table);
 
 #endif

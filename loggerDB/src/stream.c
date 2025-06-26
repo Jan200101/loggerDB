@@ -8,7 +8,7 @@
 #include "loggerDB/path.h"
 #include "loggerDB/status.h"
 
-int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int flags, loggerdb_stream** stream)
+int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int flags, loggerdb_stream* stream)
 {
     if (!node || !field || !stream)
         return LOGGERDB_INVALID;
@@ -25,9 +25,8 @@ int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int fl
         return LOGGERDB_FDERR;
     }
 
-    *stream = malloc(sizeof(**stream));
-    (*stream)->fd = fd;
-    (*stream)->membs = membs;
+    stream->fd = fd;
+    stream->membs = membs;
 
     return LOGGERDB_OK;
 }
@@ -42,14 +41,13 @@ int ldb_stream_close(struct loggerdb_stream* stream)
     close(stream->fd);
     stream->fd = -1;
     stream->membs = 0;
-    free(stream);
 
     return LOGGERDB_OK;
 }
 
 ssize_t ldb_stream_read(loggerdb_stream* stream, void* ptr)
 {
-    if (!stream || !ptr)
+    if (!stream || !stream->membs || !ptr)
         return -LOGGERDB_INVALID;
     if (stream->fd < 0)
         return -LOGGERDB_FDERR;
@@ -65,7 +63,7 @@ ssize_t ldb_stream_read(loggerdb_stream* stream, void* ptr)
 
 ssize_t ldb_stream_write(loggerdb_stream* stream, void* ptr)
 {
-    if (!stream || !ptr)
+    if (!stream || !stream->membs || !ptr)
         return -LOGGERDB_INVALID;
     if (stream->fd < 0)
         return -LOGGERDB_FDERR;
@@ -81,7 +79,7 @@ ssize_t ldb_stream_write(loggerdb_stream* stream, void* ptr)
 
 ssize_t ldb_stream_seek(loggerdb_stream* stream, off_t offset, int whence)
 {
-    if (!stream)
+    if (!stream || !stream->membs)
         return -LOGGERDB_INVALID;
     if (stream->fd < 0)
         return -LOGGERDB_FDERR;

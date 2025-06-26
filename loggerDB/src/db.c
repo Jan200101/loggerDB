@@ -11,9 +11,9 @@
 #include "loggerDB/mutex.h"
 
 
-int ldb_open(const char* base_path, loggerdb** db)
+int ldb_open(const char* base_path, loggerdb* db)
 {
-    if (!base_path)
+    if (!base_path || !db)
         return LOGGERDB_ERROR;
 
     if (!ldb_path_exists(base_path))
@@ -25,8 +25,7 @@ int ldb_open(const char* base_path, loggerdb** db)
         return LOGGERDB_NOTADB;
     }
 
-    *db = malloc(sizeof(**db));
-    (*db)->path = strdup(base_path);
+    db->path = strdup(base_path);
 
     return LOGGERDB_OK;
 }
@@ -34,10 +33,10 @@ int ldb_open(const char* base_path, loggerdb** db)
 int ldb_close(loggerdb* db)
 {
     if (!db)
-        return LOGGERDB_OK;
+        return LOGGERDB_INVALID;
 
     free(db->path);
-    free(db);
+    db->path = NULL;
 
     return LOGGERDB_OK;
 }

@@ -17,13 +17,13 @@ ssize_t ldb_insert_data(loggerdb_table* table, time_t time, void* ptr, size_t si
     int r;
     ssize_t bytes;
 
-    loggerdb_node* node;
+    loggerdb_node node;
     if ((r = ldb_node_open(table, time, &node)) != LOGGERDB_OK)
         return -r;
 
-    bytes = ldb_node_append(node, DATA_FIELD, ptr, size);
+    bytes = ldb_node_append(&node, DATA_FIELD, ptr, size);
 
-    if ((r = ldb_node_close(node)) != LOGGERDB_OK)
+    if ((r = ldb_node_close(&node)) != LOGGERDB_OK)
         return -r;
 
     return bytes;
