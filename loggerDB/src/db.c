@@ -6,10 +6,10 @@
 #include "loggerDB/db.h"
 #include "loggerDB/table.h"
 #include "loggerDB/node.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
 #include "loggerDB/mutex.h"
 
+#include "path.h"
 
 int ldb_open(const char* base_path, loggerdb* db)
 {

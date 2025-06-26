@@ -2,10 +2,11 @@
 #include <sys/stat.h>
 
 #include "loggerDB/table.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
 #include "loggerDB/db.h"
 #include "loggerDB/compat.h"
+
+#include "path.h"
 
 int ldb_table_open(loggerdb* db, const char* name, loggerdb_table* table)
 {

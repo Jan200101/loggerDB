@@ -1,5 +1,5 @@
-#ifndef LOGGERDB_PATH_H
-#define LOGGERDB_PATH_H
+#ifndef LOGGERDB_PATH_INTERNAL_H
+#define LOGGERDB_PATH_INTERNAL_H
 
 int ldb_path_exists(const char* path);
 int ldb_path_is_file(const char* path);

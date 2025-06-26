@@ -12,9 +12,10 @@
 
 #include "loggerDB/table.h"
 #include "loggerDB/node.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
 #include "loggerDB/compat.h"
+
+#include "path.h"
 
 #define METADATA_SIZE_LIMIT 255
 

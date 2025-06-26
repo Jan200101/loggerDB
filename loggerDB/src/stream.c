@@ -5,8 +5,9 @@
 
 #include "loggerDB/node.h"
 #include "loggerDB/stream.h"
-#include "loggerDB/path.h"
 #include "loggerDB/status.h"
+
+#include "path.h"
 
 int ldb_stream_open(loggerdb_node* node, const char* field, size_t membs, int flags, loggerdb_stream* stream)
 {
